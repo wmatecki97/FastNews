@@ -1,18 +1,14 @@
-﻿using HtmlAgilityPack;
+﻿using FastNews.NewsGenerators;
 using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Linq;
-using System.Net.Http;
-using System.Text;
+using System.IO;
 using System.Threading.Tasks;
 using Xamarin.Forms;
-using System.Linq;
 
 namespace FastNews
 {
     public partial class MainPage : ContentPage
     {
+        #region controls
         private string _newsText = "";
         public string NewsText
         {
@@ -24,8 +20,8 @@ namespace FastNews
             }
         }
 
-        private Xamarin.Forms.Color _textColor = Color.Red;
-        public Xamarin.Forms.Color TextColor
+        private Color _textColor = Color.Red;
+        public Color TextColor
         {
             get { return _textColor; }
             set
@@ -34,6 +30,21 @@ namespace FastNews
                 OnPropertyChanged(nameof(TextColor)); // Notify that there was a change on this property
             }
         }
+
+        private bool _filterVisitedNews;
+        public bool FilterVisitedNews
+        {
+            get
+            {
+                return _filterVisitedNews;
+            }
+            set
+            {
+                _filterVisitedNews = value;
+                this.OnPropertyChanged(nameof(FilterVisitedNews));
+            }
+        }
+        #endregion
 
         public MainPage()
         {
@@ -44,10 +55,13 @@ namespace FastNews
 
         async void OnButtonClicked(object sender, EventArgs args)
         {
-            var allNews = await GetNews();
-            bool primaryColor = true;
+            var generator = new NewsGeneratorsFactory().GetGeneratorByName("Poinformowani");
+            var allNews = await generator.GetNews();
+            var notVisitedNews = new VisitedNewsHistory().AddNewsToHistory(allNews);
+            var newsToDisplay = FilterVisitedNews ? notVisitedNews : allNews;
 
-            foreach (var news in allNews)
+            bool primaryColor = true;
+            foreach (var news in newsToDisplay)
             {
                 foreach(var word in news.Split(' '))
                 {
@@ -56,39 +70,8 @@ namespace FastNews
                 }
                 TextColor = primaryColor ? Color.Green : Color.Black;
                 primaryColor = !primaryColor;
+                await Task.Delay(130);
             };
-        }
-
-        public async Task<List<string>> GetNews()
-        {
-            using (HttpClient client = new HttpClient())
-            {
-                var newsHtml = await client.GetAsync("https://poinformowani.pl/");
-                var doc = new HtmlDocument();
-                doc.LoadHtml(newsHtml.Content.ReadAsStringAsync().Result);
-
-                List<HtmlNode> allNodes = new List<HtmlNode>();
-                var headers = doc.DocumentNode.SelectNodes("//article")
-                    .SelectMany(x => GetNodes(x, allNodes))
-                    .Where(x => x.Name == "h2")
-                    .Select(x => x.InnerText.Replace("&nbsp;", " ").Replace("&quot;", " "))
-                    .Distinct()
-                    .ToList();
-
-                return headers;
-            }
-
-            List<HtmlNode> GetNodes(HtmlNode node, List<HtmlNode> result)
-            {
-                result.Add(node);
-
-                if (node is null)
-                    return result;
-
-                node.ChildNodes.ToList().ForEach(x => GetNodes(x, result));
-
-                return result;
-            }
         }
     }
 }

@@ -5,14 +5,20 @@
 
     <StackLayout>
         <Frame BackgroundColor="#2196F3" Padding="24" CornerRadius="0">
-            <Label Text="Welcome to Xamarin.Forms!" HorizontalTextAlignment="Center" TextColor="White" FontSize="36"/>
+            <Label Text="Welcome to Fast News. Here you can be always up to date in under a minute!" HorizontalTextAlignment="Center" TextColor="White" FontSize="36"/>
         </Frame>
-        <Label Text="{Binding NewsText}" FontSize="Title" Padding="30,10,30,10" TextColor="{Binding TextColor}" VerticalTextAlignment="Center"/>
+        <Label Text="{Binding NewsText}" FontSize="Large" Padding="30,10,30,10" TextColor="{Binding TextColor}" HorizontalTextAlignment="Center"/>
        
         <Button Text="SendRequest!"
                 VerticalOptions="CenterAndExpand"
                 HorizontalOptions="Center"
                 Clicked="OnButtonClicked" />
+
+        <StackLayout HorizontalOptions="FillAndExpand" VerticalOptions="FillAndExpand" Orientation="Horizontal">
+            <Label Text="Do not show already displayed news" HorizontalOptions="StartAndExpand"></Label>
+            <CheckBox IsChecked="{Binding FilterVisitedNews}" HorizontalOptions="End" HeightRequest="50"></CheckBox>
+        </StackLayout>
+
     </StackLayout>
 
 </ContentPage>

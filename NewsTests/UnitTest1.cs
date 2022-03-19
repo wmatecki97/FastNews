@@ -17,7 +17,7 @@ namespace NewsTests
         [Test]
         public async Task Test1()
         {
-            
+            var factory = new NewsGeneratorFactory();
         }
     }
 }
