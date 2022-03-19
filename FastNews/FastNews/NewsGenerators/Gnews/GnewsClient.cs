@@ -15,7 +15,7 @@ namespace FastNews.NewsGenerators.Gnews
             {
                 var newsJson = await client.GetStringAsync($"https://gnews.io/api/v4/search?q={query}&token={Token}&lang=en");
                 var news = JsonConvert.DeserializeObject<GnewsResponse>(newsJson);
-                return news.Articles.Select(n => n.Description).ToArray();
+                return news.Articles.Select(n => n.Description).ToList();
             }
         }
     }

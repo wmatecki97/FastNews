@@ -18,6 +18,20 @@
             <Label Text="Do not show already displayed news" HorizontalOptions="StartAndExpand"></Label>
             <CheckBox IsChecked="{Binding FilterVisitedNews}" HorizontalOptions="End" HeightRequest="50"></CheckBox>
         </StackLayout>
+        
+        <Picker Title="Select a source of the news"
+            SelectedIndexChanged="OnPickerSelectedIndexChanged"
+        TitleColor="Red">
+            <Picker.Items>
+                <x:String>Poinformowani</x:String>
+                <x:String>Tech</x:String>
+                <x:String>AP Tech</x:String>
+                <x:String>AP science news</x:String>
+                <x:String>AP Tech news</x:String>
+                <x:String>AP world news</x:String>
+                <x:String>AP business news</x:String>
+            </Picker.Items>
+        </Picker>
 
     </StackLayout>
 

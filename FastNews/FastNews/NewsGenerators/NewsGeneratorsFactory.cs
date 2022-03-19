@@ -4,12 +4,13 @@ using System.Reflection;
 
 namespace FastNews.NewsGenerators
 {
-    public class NewsGeneratorsFactory
+    internal class NewsGeneratorsFactory
     {
-        public INewsGenerator GetGeneratorByName(string name)
+        internal INewsGenerator GetGeneratorByName(string name)
         {
-            var generators = Assembly.GetCallingAssembly().GetTypes().Where(t => t.IsAssignableFrom(typeof(INewsGenerator)));
-            var availableGenerators = generators.Select(g => (INewsGenerator)Activator.CreateInstance(g)).ToArray();
+            var generators = Assembly.GetAssembly(typeof(NewsGeneratorsFactory)).GetTypes()
+                .Where(t => t.IsClass && !t.IsAbstract && typeof(INewsGenerator).IsAssignableFrom(t));
+            var availableGenerators = generators.Select(g => (INewsGenerator) Activator.CreateInstance(g)).ToArray();
             return availableGenerators.FirstOrDefault(g => g.ServiceName == name);
         }
     }

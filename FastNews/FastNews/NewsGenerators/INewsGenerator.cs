@@ -5,7 +5,7 @@ namespace FastNews.NewsGenerators
 {
     internal interface INewsGenerator
     {
-        string ServiceName { get; set; }
+        string ServiceName { get; }
 
         Task<List<string>> GetNews();
     }

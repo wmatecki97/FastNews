@@ -1,4 +1,5 @@
 ﻿using FastNews.NewsGenerators;
+using Newtonsoft.Json;
 using System;
 using System.IO;
 using System.Threading.Tasks;
@@ -55,7 +56,12 @@ namespace FastNews
 
         async void OnButtonClicked(object sender, EventArgs args)
         {
-            var generator = new NewsGeneratorsFactory().GetGeneratorByName("Poinformowani");
+            await ShowNews("Poinformowani");
+        }
+
+        private async Task ShowNews(string serviceName)
+        {
+            var generator = new NewsGeneratorsFactory().GetGeneratorByName(serviceName);
             var allNews = await generator.GetNews();
             var notVisitedNews = new VisitedNewsHistory().AddNewsToHistory(allNews);
             var newsToDisplay = FilterVisitedNews ? notVisitedNews : allNews;
@@ -63,7 +69,7 @@ namespace FastNews
             bool primaryColor = true;
             foreach (var news in newsToDisplay)
             {
-                foreach(var word in news.Split(' '))
+                foreach (var word in news.Split(' '))
                 {
                     NewsText = word;
                     await Task.Delay(130);
@@ -72,6 +78,13 @@ namespace FastNews
                 primaryColor = !primaryColor;
                 await Task.Delay(130);
             };
+        }
+
+        async void OnPickerSelectedIndexChanged(object sender, EventArgs e)
+        {
+            var picker = (Picker)sender;
+
+            await ShowNews(picker.SelectedItem.ToString());
         }
     }
 }
