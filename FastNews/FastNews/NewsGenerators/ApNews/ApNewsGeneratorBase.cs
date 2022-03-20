@@ -14,7 +14,9 @@ namespace FastNews.NewsGenerators
 
         public async Task<int> GetUnreadNewsCount()
         {
-            return (await GetNews()).Count();
+            var historyManager = new VisitedNewsHistoryManager();
+            List<string> news = await GetNews();
+            return historyManager.GetNotVisitedNews(news).Count();
         } 
 
         private List<string> _news;

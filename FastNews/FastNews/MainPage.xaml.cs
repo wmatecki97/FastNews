@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using Xamarin.Forms;
@@ -13,7 +14,7 @@ namespace FastNews
     public partial class MainPage : ContentPage
     {
         #region controls
-        private string _newsText = "";
+        private string _newsText = "Select source below";
         public string NewsText
         {
             get { return _newsText; }
@@ -46,6 +47,21 @@ namespace FastNews
             {
                 _filterVisitedNews = value;
                 this.OnPropertyChanged(nameof(FilterVisitedNews));
+            }
+        }
+
+        private int currentlyWorkingGenerators = 0;
+        private bool _areNewsCurrentlyDisplayed = false;
+        public bool AreNewsCurrentlyDisplayed
+        {
+            get
+            {
+                return _areNewsCurrentlyDisplayed;
+            }
+            set
+            {
+                _areNewsCurrentlyDisplayed = value;
+                this.OnPropertyChanged(nameof(AreNewsCurrentlyDisplayed));
             }
         }
 
@@ -158,6 +174,7 @@ namespace FastNews
         {
             Button button = (Button)Sender;
             _currentTaskToken = Guid.NewGuid();
+            
             string selectedGeneratorLabel = button.Text;
             var generator = new NewsGeneratorsFactory().GetGeneratorByName(selectedGeneratorLabel);
             var unreadCount = await generator.GetUnreadNewsCount();
@@ -173,8 +190,11 @@ namespace FastNews
             var visitedNewsHistoryManager = new VisitedNewsHistoryManager();
             var notVisitedNews = visitedNewsHistoryManager.GetNotVisitedNews(allNews);
             var newsToDisplay = FilterVisitedNews ? notVisitedNews : allNews;
-
             bool primaryColor = true;
+
+            Interlocked.Increment(ref currentlyWorkingGenerators);
+            if (currentlyWorkingGenerators > 0)
+                AreNewsCurrentlyDisplayed = true;
 
             foreach (var news in newsToDisplay)
             {
@@ -196,8 +216,17 @@ namespace FastNews
                 }
 
                 if (_currentTaskToken != token)
-                    return;
+                    break;
             };
+
+            Interlocked.Decrement(ref currentlyWorkingGenerators);
+            if (currentlyWorkingGenerators == 0)
+                AreNewsCurrentlyDisplayed = false;
+        }
+
+        private void StopNews(object sender, EventArgs e)
+        {
+            _currentTaskToken = Guid.NewGuid();
         }
     }
 }
