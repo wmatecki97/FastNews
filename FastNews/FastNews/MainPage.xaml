@@ -3,35 +3,39 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="FastNews.MainPage">
 
-    <StackLayout>
+    <StackLayout Margin="20">
         <Frame BackgroundColor="#2196F3" Padding="24" CornerRadius="0">
             <Label Text="Welcome to Fast News. Here you can be always up to date in under a minute!" HorizontalTextAlignment="Center" TextColor="White" FontSize="36"/>
         </Frame>
         <Label Text="{Binding NewsText}" FontSize="Large" Padding="30,10,30,10" TextColor="{Binding TextColor}" HorizontalTextAlignment="Center"/>
-       
-        <Button Text="SendRequest!"
+
+        <ListView x:Name="listView"
+              HasUnevenRows="True">
+            <ListView.ItemTemplate>
+                <DataTemplate>
+                    <ViewCell>
+                        <Button Text="{Binding .}" Clicked="GetNewsFromPredefinedSource"/>
+                    </ViewCell>
+                </DataTemplate>
+            </ListView.ItemTemplate>
+        </ListView>
+
+        <Entry x:Name="entry" Text="{Binding CustomTopicSearch}" Placeholder="Enter your custom topic" />
+        <Button Text="Custom topic"
                 VerticalOptions="CenterAndExpand"
                 HorizontalOptions="Center"
-                Clicked="OnButtonClicked" />
+                Clicked="ShowCustomTopicNewsClicked" />
 
-        <StackLayout HorizontalOptions="FillAndExpand" VerticalOptions="FillAndExpand" Orientation="Horizontal">
+        <Label Text="{Binding Wpm}" HorizontalOptions="StartAndExpand"></Label>
+        <Slider Value="{Binding SpeedValue}"
+                Maximum="200" 
+                Minimum="0"/>
+
+        <StackLayout Orientation="Horizontal"
+                         Spacing="15">
             <Label Text="Do not show already displayed news" HorizontalOptions="StartAndExpand"></Label>
             <CheckBox IsChecked="{Binding FilterVisitedNews}" HorizontalOptions="End" HeightRequest="50"></CheckBox>
         </StackLayout>
-        
-        <Picker Title="Select a source of the news"
-            SelectedIndexChanged="OnPickerSelectedIndexChanged"
-        TitleColor="Red">
-            <Picker.Items>
-                <x:String>Poinformowani</x:String>
-                <x:String>Tech</x:String>
-                <x:String>AP Tech</x:String>
-                <x:String>AP science news</x:String>
-                <x:String>AP Tech news</x:String>
-                <x:String>AP world news</x:String>
-                <x:String>AP business news</x:String>
-            </Picker.Items>
-        </Picker>
 
     </StackLayout>
 

@@ -1,7 +1,10 @@
 ﻿using FastNews.NewsGenerators;
-using Newtonsoft.Json;
+using FastNews.NewsGenerators.Gnews;
 using System;
-using System.IO;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Xamarin.Forms;
 
@@ -32,7 +35,7 @@ namespace FastNews
             }
         }
 
-        private bool _filterVisitedNews;
+        private bool _filterVisitedNews = true;
         public bool FilterVisitedNews
         {
             get
@@ -45,7 +48,74 @@ namespace FastNews
                 this.OnPropertyChanged(nameof(FilterVisitedNews));
             }
         }
+
+        private string _customTopicSearch;
+        public string CustomTopicSearch
+        {
+            get
+            {
+                return _customTopicSearch;
+            }
+            set
+            {
+                _customTopicSearch = value;
+                this.OnPropertyChanged(nameof(CustomTopicSearch));
+            }
+        }
+
+        private int _speedValue = 100;
+        private const int MaxDelayBetweenWords = 300;
+        public int SpeedValue
+        {
+            get
+            {
+                return _speedValue;
+            }
+            set
+            {
+                _speedValue = value;
+                this.OnPropertyChanged(nameof(SpeedValue));
+                this.OnPropertyChanged(nameof(Wpm));
+            }
+        }
+        public int DelayBetweenWords => MaxDelayBetweenWords - SpeedValue;
+
+        public string Wpm
+        {
+            get
+            {
+                return $"Current reading speed: {1000*60/ DelayBetweenWords} WPM";
+            }
+        }
+
         #endregion
+
+        ObservableCollection<String> list;
+
+        protected override void OnAppearing()
+        {
+            base.OnAppearing();
+            FillPredefinedGeneratorsList();
+        }
+
+        private async Task FillPredefinedGeneratorsList()
+        {
+            var history = new VisitedNewsHistoryManager();
+            var predefinedGenerators = new List<string>();
+            list = new ObservableCollection<string>(predefinedGenerators);
+            listView.ItemsSource = list;
+            foreach (var generator in NewsGeneratorsFactory.GetPredefinedGenerators())
+            {
+                int unreadedNewsCount = await history.GetUnreadNewsCountAsync(generator);
+                var displayLabel = GetPredefinedGeneratorDisplayLabel(generator, unreadedNewsCount);
+                list.Add(displayLabel);
+            }
+        }
+
+        private static string GetPredefinedGeneratorDisplayLabel(IPredefinedNewsGenerator generator, int unreadedNewsCount)
+        {
+            return $"{generator.ServiceName} ({unreadedNewsCount})";
+        }
 
         public MainPage()
         {
@@ -54,37 +124,57 @@ namespace FastNews
             BindingContext = this;
         }
 
-        async void OnButtonClicked(object sender, EventArgs args)
+        async void ShowCustomTopicNewsClicked(object sender, EventArgs args)
         {
-            await ShowNews("Poinformowani");
+            var generator = new GnewsGenerator(CustomTopicSearch);
+            await ShowNews(generator);
         }
 
-        private async Task ShowNews(string serviceName)
+        public async void GetNewsFromPredefinedSource(Object Sender, EventArgs args)
         {
-            var generator = new NewsGeneratorsFactory().GetGeneratorByName(serviceName);
+            Button button = (Button)Sender;
+            _currentTaskToken = Guid.NewGuid();
+            string selectedGeneratorLabel = button.Text;
+            var generator = new NewsGeneratorsFactory().GetGeneratorByName(selectedGeneratorLabel);
+            var unreadCount = await generator.GetUnreadNewsCount();
+            await ShowNews(generator, () => button.Text = GetPredefinedGeneratorDisplayLabel(generator, unreadCount--));
+            ;
+        }
+
+        private Guid _currentTaskToken { get; set; }
+
+        private async Task ShowNews(INewsGenerator generator, Action AfterEveryNewsAction = null)
+        {
+            var token = _currentTaskToken;
             var allNews = await generator.GetNews();
-            var notVisitedNews = new VisitedNewsHistory().AddNewsToHistory(allNews);
+            var visitedNewsHistoryManager = new VisitedNewsHistoryManager();
+            var notVisitedNews = visitedNewsHistoryManager.GetNotVisitedNews(allNews);
             var newsToDisplay = FilterVisitedNews ? notVisitedNews : allNews;
 
             bool primaryColor = true;
+
             foreach (var news in newsToDisplay)
             {
+                NewsText = String.Empty;
+                TextColor = primaryColor ? Color.Green : Color.Black;
+                primaryColor = !primaryColor;
                 foreach (var word in news.Split(' '))
                 {
                     NewsText = word;
-                    await Task.Delay(130);
+                    await Task.Delay(DelayBetweenWords);
                 }
-                TextColor = primaryColor ? Color.Green : Color.Black;
-                primaryColor = !primaryColor;
-                await Task.Delay(130);
+                visitedNewsHistoryManager.AddNewsToHistory(news);
+
+                await Task.Delay(DelayBetweenWords);
+                
+                if (AfterEveryNewsAction != null)
+                {
+                    AfterEveryNewsAction();
+                }
+
+                if (_currentTaskToken != token)
+                    return;
             };
-        }
-
-        async void OnPickerSelectedIndexChanged(object sender, EventArgs e)
-        {
-            var picker = (Picker)sender;
-
-            await ShowNews(picker.SelectedItem.ToString());
         }
     }
 }

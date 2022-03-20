@@ -3,10 +3,8 @@ using System.Threading.Tasks;
 
 namespace FastNews.NewsGenerators
 {
-    internal interface INewsGenerator
+    public interface INewsGenerator
     {
-        string ServiceName { get; }
-
         Task<List<string>> GetNews();
     }
 }

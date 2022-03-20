@@ -6,12 +6,22 @@ using System.Threading.Tasks;
 
 namespace FastNews.NewsGenerators
 {
-    internal class PoinformowaniNewsGenerator : INewsGenerator
+    internal class PoinformowaniNewsGenerator : IPredefinedNewsGenerator
     {
         public string ServiceName { get; set; } = "Poinformowani";
 
+        public async Task<int> GetUnreadNewsCount()
+        {
+            return (await GetNews()).Count();
+        }
+
+        private List<string> _news;
+
         public async Task<List<string>> GetNews()
         {
+            if (_news != null)
+                return _news;
+
             using (HttpClient client = new HttpClient())
             {
                 var newsHtml = await client.GetAsync("https://poinformowani.pl/");
