@@ -4,39 +4,42 @@
              x:Class="FastNews.MainPage">
 
     <StackLayout Margin="20">
-        <Frame BackgroundColor="#2196F3" Padding="24" CornerRadius="0">
-            <Label Text="Welcome to Fast News. Here you can be always up to date in under a minute!" HorizontalTextAlignment="Center" TextColor="White" FontSize="36"/>
-        </Frame>
-        <Label Text="{Binding NewsText}" FontSize="Large" Padding="30,10,30,10" TextColor="{Binding TextColor}" HorizontalTextAlignment="Center"/>
 
-        <ListView x:Name="listView"
+
+        <Frame BackgroundColor="#2196F3" Padding="24" CornerRadius="0">
+                <Label Text="Welcome to Fast News. Here you can be always up to date in under a minute!" HorizontalTextAlignment="Center" TextColor="White" FontSize="36"/>
+            </Frame>
+            <Label Text="{Binding NewsText}" FontSize="Large" Padding="30,10,30,10" TextColor="{Binding TextColor}" HorizontalTextAlignment="Center"/>
+        <RefreshView IsRefreshing="{Binding IsRefreshing}"
+             Command="{Binding RefreshCommand}">
+            <ListView x:Name="listView"
               HasUnevenRows="True">
-            <ListView.ItemTemplate>
-                <DataTemplate>
-                    <ViewCell>
-                        <Button Text="{Binding .}" Clicked="GetNewsFromPredefinedSource"/>
-                    </ViewCell>
-                </DataTemplate>
-            </ListView.ItemTemplate>
-        </ListView>
+                <ListView.ItemTemplate>
+                    <DataTemplate>
+                        <ViewCell>
+                            <Button Text="{Binding .}" Clicked="GetNewsFromPredefinedSource"/>
+                        </ViewCell>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
+        </RefreshView>
 
         <Entry x:Name="entry" Text="{Binding CustomTopicSearch}" Placeholder="Enter your custom topic" />
-        <Button Text="Custom topic"
+            <Button Text="Custom topic"
                 VerticalOptions="CenterAndExpand"
                 HorizontalOptions="Center"
                 Clicked="ShowCustomTopicNewsClicked" />
 
-        <Label Text="{Binding Wpm}" HorizontalOptions="StartAndExpand"></Label>
-        <Slider Value="{Binding SpeedValue}"
+            <Label Text="{Binding Wpm}" HorizontalOptions="StartAndExpand"></Label>
+            <Slider Value="{Binding SpeedValue}"
                 Maximum="200" 
                 Minimum="0"/>
 
-        <StackLayout Orientation="Horizontal"
+            <StackLayout Orientation="Horizontal"
                          Spacing="15">
-            <Label Text="Do not show already displayed news" HorizontalOptions="StartAndExpand"></Label>
-            <CheckBox IsChecked="{Binding FilterVisitedNews}" HorizontalOptions="End" HeightRequest="50"></CheckBox>
-        </StackLayout>
-
+                <Label Text="Do not show already displayed news" HorizontalOptions="StartAndExpand"></Label>
+                <CheckBox IsChecked="{Binding FilterVisitedNews}" HorizontalOptions="End" HeightRequest="50"></CheckBox>
+            </StackLayout>
     </StackLayout>
 
 </ContentPage>

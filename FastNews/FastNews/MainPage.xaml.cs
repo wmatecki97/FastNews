@@ -4,8 +4,8 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
+using System.Windows.Input;
 using Xamarin.Forms;
 
 namespace FastNews
@@ -88,9 +88,22 @@ namespace FastNews
             }
         }
 
+        bool isRefreshing;
+        public bool IsRefreshing
+        {
+            get => isRefreshing;
+            set
+            {
+                isRefreshing = value;
+                OnPropertyChanged(nameof(IsRefreshing));
+            }
+        }
+
         #endregion
 
         ObservableCollection<String> list;
+
+        public ICommand RefreshCommand { get; }
 
         protected override void OnAppearing()
         {
@@ -104,12 +117,17 @@ namespace FastNews
             var predefinedGenerators = new List<string>();
             list = new ObservableCollection<string>(predefinedGenerators);
             listView.ItemsSource = list;
-            foreach (var generator in NewsGeneratorsFactory.GetPredefinedGenerators())
+            var updateGeneratorsListTasks = NewsGeneratorsFactory.GetPredefinedGenerators().Select(generator => Task.Run(async () =>
             {
                 int unreadedNewsCount = await history.GetUnreadNewsCountAsync(generator);
                 var displayLabel = GetPredefinedGeneratorDisplayLabel(generator, unreadedNewsCount);
-                list.Add(displayLabel);
-            }
+                lock (list)
+                {
+                    list.Add(displayLabel);
+                }
+            })).ToArray();
+
+            await Task.WhenAll(updateGeneratorsListTasks);
         }
 
         private static string GetPredefinedGeneratorDisplayLabel(IPredefinedNewsGenerator generator, int unreadedNewsCount)
@@ -119,9 +137,15 @@ namespace FastNews
 
         public MainPage()
         {
+            RefreshCommand = new Command(ExecuteRefreshCommand);
             InitializeComponent();
-            
             BindingContext = this;
+        }
+
+        private async void ExecuteRefreshCommand(object obj)
+        {
+            await FillPredefinedGeneratorsList();
+            IsRefreshing = false;
         }
 
         async void ShowCustomTopicNewsClicked(object sender, EventArgs args)
@@ -138,7 +162,6 @@ namespace FastNews
             var generator = new NewsGeneratorsFactory().GetGeneratorByName(selectedGeneratorLabel);
             var unreadCount = await generator.GetUnreadNewsCount();
             await ShowNews(generator, () => button.Text = GetPredefinedGeneratorDisplayLabel(generator, unreadCount--));
-            ;
         }
 
         private Guid _currentTaskToken { get; set; }
